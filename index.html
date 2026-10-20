@@ -1,0 +1,1345 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ffe4ec">
+  <title>Для тебя ❤</title>
+
+  <!-- Шрифты: Great Vibes — рукописный для заголовков, Cormorant Garamond — для письма, Nunito — для интерфейса.
+       Marck Script — запасной рукописный шрифт с кириллицей (грузится, только если понадобится). -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Marck+Script&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* =====================================================================
+       🎨 ЦВЕТА И ШРИФТЫ — МЕНЯЙ ЗДЕСЬ
+       Все цвета сайта собраны в этих переменных. Сердечки на фоне и в салюте
+       тоже берут цвета отсюда (--heart-1 … --heart-5).
+       ===================================================================== */
+    :root {
+      /* Фон (плавный градиент) */
+      --bg-1: #fff0f5;
+      --bg-2: #ffe1ec;
+      --bg-3: #efe3ff;
+      --bg-4: #ffe8da;
+
+      /* Мягкие пятна света на фоне */
+      --blob-1: #ffb6cf;
+      --blob-2: #d7c2ff;
+      --blob-3: #ffd0b0;
+
+      /* Акцентные цвета (кнопки, заголовки) */
+      --accent: #e8638f;
+      --accent-2: #f79bb8;
+      --accent-dark: #b4366a;
+
+      /* Текст */
+      --text: #5b3a4c;
+      --text-soft: #8d6a7c;
+
+      /* Стекло (glassmorphism) */
+      --glass-bg: rgba(255, 255, 255, 0.4);
+      --glass-border: rgba(255, 255, 255, 0.7);
+      --shadow-soft: 0 24px 60px -24px rgba(180, 54, 106, 0.4);
+
+      /* Цвета сердечек (фон, клики, салют) */
+      --heart-1: #f48fb1;
+      --heart-2: #f9b4cb;
+      --heart-3: #ffc4a8;
+      --heart-4: #cdb8f2;
+      --heart-5: #ff7aa2;
+
+      /* Шрифты */
+      --font-script: 'Great Vibes', 'Marck Script', cursive;
+      --font-serif: 'Cormorant Garamond', Georgia, serif;
+      --font-sans: 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+      --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    /* ===================== Базовые стили ===================== */
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html { -webkit-text-size-adjust: 100%; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: var(--font-sans);
+      color: var(--text);
+      background-color: var(--bg-1);
+      overflow-x: hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Пока открыт экран-приветствие, страница не прокручивается */
+    body.is-locked { overflow: hidden; height: 100vh; height: 100svh; }
+
+    button { font: inherit; color: inherit; }
+
+    /* ===================== Фон: градиент, пятна света, частицы ===================== */
+    .backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background: linear-gradient(135deg, var(--bg-1), var(--bg-2), var(--bg-3), var(--bg-4), var(--bg-1));
+      background-size: 300% 300%;
+      animation: gradientShift 28s ease-in-out infinite;
+    }
+
+    @keyframes gradientShift {
+      0%, 100% { background-position: 0% 50%; }
+      50%      { background-position: 100% 50%; }
+    }
+
+    .blobs { position: fixed; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+
+    .blob { position: absolute; will-change: transform; }
+
+    .blob span {
+      display: block;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      filter: blur(70px);
+      opacity: 0.55;
+      animation: blobFloat 22s ease-in-out infinite;
+    }
+
+    .blob--1 { width: 46vmax; height: 46vmax; top: -14vmax; left: -12vmax; }
+    .blob--2 { width: 40vmax; height: 40vmax; bottom: -16vmax; right: -10vmax; }
+    .blob--3 { width: 30vmax; height: 30vmax; top: 40%; left: 55%; }
+
+    .blob--1 span { background: var(--blob-1); }
+    .blob--2 span { background: var(--blob-2); animation-delay: -7s; animation-duration: 26s; }
+    .blob--3 span { background: var(--blob-3); animation-delay: -13s; animation-duration: 30s; opacity: 0.45; }
+
+    @keyframes blobFloat {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33%      { transform: translate(4vmax, 3vmax) scale(1.08); }
+      66%      { transform: translate(-3vmax, 2vmax) scale(0.95); }
+    }
+
+    #bg-canvas, #fx-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+    #bg-canvas { z-index: 2; }
+    #fx-canvas { z-index: 50; }
+
+    /* ===================== Общие элементы ===================== */
+    .glass {
+      background: var(--glass-bg);
+      -webkit-backdrop-filter: blur(18px) saturate(140%);
+      backdrop-filter: blur(18px) saturate(140%);
+      border: 1px solid var(--glass-border);
+      border-radius: 28px;
+      box-shadow: var(--shadow-soft), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    }
+
+    .btn {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 34px;
+      border: none;
+      border-radius: 999px;
+      font-family: var(--font-sans);
+      font-weight: 700;
+      font-size: 1.05rem;
+      letter-spacing: 0.02em;
+      color: #fff;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow: 0 14px 34px -12px rgba(232, 99, 143, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+      cursor: pointer;
+      overflow: hidden;
+      transition: transform 0.5s var(--ease-soft), box-shadow 0.5s var(--ease-soft), filter 0.4s ease;
+    }
+
+    /* Блик, который пробегает по кнопке */
+    .btn::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -60%;
+      width: 40%;
+      height: 100%;
+      background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+      transform: skewX(-20deg);
+      animation: shine 4.5s ease-in-out infinite;
+    }
+
+    @keyframes shine {
+      0%, 60% { left: -60%; }
+      100%    { left: 130%; }
+    }
+
+    .btn:hover { transform: translateY(-3px); box-shadow: 0 20px 40px -12px rgba(232, 99, 143, 0.8); }
+    .btn:active { transform: translateY(0) scale(0.98); }
+    .btn:focus-visible { outline: 3px solid rgba(255, 255, 255, 0.9); outline-offset: 4px; }
+
+    .btn--ghost {
+      color: var(--accent-dark);
+      background: rgba(255, 255, 255, 0.55);
+      border: 1px solid var(--glass-border);
+      box-shadow: 0 10px 30px -14px rgba(180, 54, 106, 0.4);
+    }
+    .btn--ghost::after { display: none; }
+
+    .beat { display: inline-block; animation: beat 1.3s ease-in-out infinite; }
+
+    @keyframes beat {
+      0%, 100% { transform: scale(1); }
+      15%      { transform: scale(1.25); }
+      30%      { transform: scale(1); }
+      45%      { transform: scale(1.15); }
+    }
+
+    .section {
+      position: relative;
+      z-index: 3;
+      min-height: 100vh;
+      min-height: 100svh;
+      padding: clamp(72px, 12vh, 130px) 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .section-title {
+      margin: 0 0 12px;
+      font-family: var(--font-script);
+      font-weight: 400;
+      font-size: clamp(2.8rem, 9vw, 5rem);
+      line-height: 1.1;
+      color: var(--accent-dark);
+      text-align: center;
+      text-shadow: 0 4px 24px rgba(255, 255, 255, 0.9);
+    }
+
+    .section-sub {
+      margin: 0 0 clamp(32px, 6vh, 56px);
+      max-width: 520px;
+      text-align: center;
+      font-size: 0.95rem;
+      letter-spacing: 0.04em;
+      color: var(--text-soft);
+    }
+
+    /* ===================== Появление при прокрутке ===================== */
+    .reveal {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 1.2s var(--ease-soft), transform 1.2s var(--ease-soft);
+      transition-delay: var(--delay, 0s);
+    }
+    .reveal.is-visible { opacity: 1; transform: none; }
+
+    /* Слова письма проявляются по одному */
+    .word {
+      display: inline-block;
+      opacity: 0;
+      transform: translateY(14px);
+      transition: opacity 0.8s ease, transform 0.8s var(--ease-soft);
+      transition-delay: calc(var(--i) * 32ms);
+    }
+    .is-visible .word { opacity: 1; transform: none; }
+
+    /* ===================== 1. Экран-приветствие ===================== */
+    .welcome {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      display: grid;
+      place-items: center;
+      padding: 24px 16px;
+      text-align: center;
+      overflow-y: auto;
+      transition: opacity 1.3s ease, transform 1.3s var(--ease-soft), filter 1.3s ease, visibility 0s linear 1.3s;
+    }
+
+    .welcome.is-leaving {
+      opacity: 0;
+      transform: scale(1.08);
+      filter: blur(10px);
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .welcome__inner { will-change: transform; }
+
+    .welcome__pre {
+      margin: 0 0 8px;
+      font-size: clamp(0.75rem, 2.6vw, 0.95rem);
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      color: var(--text-soft);
+      opacity: 0;
+      animation: fadeUp 1.4s var(--ease-soft) 0.2s forwards;
+    }
+
+    .welcome__name {
+      margin: 0;
+      font-family: var(--font-script);
+      font-weight: 400;
+      font-size: clamp(3.6rem, 16vw, 9.5rem);
+      line-height: 1.15;
+      color: var(--accent-dark);
+      text-shadow: 0 0 40px rgba(255, 255, 255, 0.95), 0 6px 30px rgba(232, 99, 143, 0.35);
+      overflow-wrap: anywhere;
+    }
+
+    .welcome__name .letter {
+      display: inline-block;
+      opacity: 0;
+      animation: letterIn 1.4s var(--ease-soft) forwards;
+      animation-delay: calc(0.6s + var(--i) * 0.09s);
+    }
+
+    @keyframes letterIn {
+      from { opacity: 0; transform: translateY(40px) rotate(-10deg) scale(0.8); filter: blur(12px); }
+      to   { opacity: 1; transform: none; filter: blur(0); }
+    }
+
+    .flourish {
+      display: block;
+      width: min(320px, 70vw);
+      height: 30px;
+      margin: 4px auto 18px;
+    }
+
+    .flourish path {
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 1.6;
+      stroke-linecap: round;
+      stroke-dasharray: 400;
+      stroke-dashoffset: 400;
+      animation: draw 2.4s ease-in-out 1.6s forwards;
+    }
+
+    .flourish .flourish__heart { fill: var(--accent); stroke: none; opacity: 0; animation: fadeIn 1s ease 3.2s forwards; }
+
+    @keyframes draw { to { stroke-dashoffset: 0; } }
+    @keyframes fadeIn { to { opacity: 1; } }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    .welcome__sub {
+      margin: 0 auto 36px;
+      max-width: 460px;
+      font-family: var(--font-serif);
+      font-style: italic;
+      font-size: clamp(1.15rem, 3.6vw, 1.45rem);
+      color: var(--text);
+      opacity: 0;
+      animation: fadeUp 1.4s var(--ease-soft) 2.6s forwards;
+    }
+
+    .welcome .btn { opacity: 0; animation: fadeUp 1.4s var(--ease-soft) 3.2s forwards; }
+
+    /* ===================== Основная часть ===================== */
+    .main { position: relative; z-index: 3; }
+    .main[hidden], .welcome[hidden] { display: none; }
+    .main.is-entering { animation: mainIn 1.6s ease both; }
+    @keyframes mainIn { from { opacity: 0; } to { opacity: 1; } }
+
+    /* ===================== 2. Письмо-признание ===================== */
+    .letter__card {
+      width: 100%;
+      max-width: 740px;
+      padding: clamp(28px, 6vw, 60px);
+      font-family: var(--font-serif);
+      font-size: clamp(1.15rem, 2.6vw, 1.4rem);
+      line-height: 1.75;
+    }
+
+    .letter__greeting {
+      margin: 0 0 18px;
+      font-family: var(--font-script);
+      font-size: clamp(2rem, 6vw, 2.7rem);
+      line-height: 1.2;
+      color: var(--accent-dark);
+    }
+
+    .letter__p { margin: 0 0 1.1em; text-indent: 1.5em; }
+
+    .letter__sign {
+      margin: 28px 0 0;
+      text-align: right;
+      font-family: var(--font-script);
+      font-size: clamp(1.9rem, 5.5vw, 2.5rem);
+      line-height: 1.3;
+      color: var(--accent-dark);
+    }
+
+    .scroll-hint {
+      margin-top: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--text-soft);
+    }
+
+    .scroll-hint svg { animation: bob 2.2s ease-in-out infinite; }
+    @keyframes bob {
+      0%, 100% { transform: translateY(0); opacity: 0.6; }
+      50%      { transform: translateY(8px); opacity: 1; }
+    }
+
+    /* ===================== 3. Причины (переворачивающиеся карточки) ===================== */
+    .reasons__grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 270px), 1fr));
+      gap: clamp(16px, 3vw, 26px);
+      width: 100%;
+      max-width: 1020px;
+    }
+
+    .card {
+      position: relative;
+      height: 290px;
+      padding: 0;
+      border: none;
+      background: none;
+      perspective: 1200px;
+      cursor: pointer;
+      text-align: center;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    .card:focus-visible { outline: none; }
+    .card:focus-visible .card__face { box-shadow: 0 0 0 3px var(--accent), var(--shadow-soft); }
+
+    .card__inner {
+      display: block;
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transform-style: preserve-3d;
+      transition: transform 1s var(--ease-soft);
+    }
+
+    .card.is-flipped .card__inner { transform: rotateY(180deg); }
+    @media (hover: hover) and (pointer: fine) {
+      .card:hover .card__inner { transform: rotateY(180deg); }
+    }
+
+    .card__face {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 28px 26px;
+      border-radius: 26px;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-soft), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+    }
+
+    .card__front { background: linear-gradient(150deg, rgba(255, 255, 255, 0.82), rgba(255, 236, 244, 0.6)); }
+
+    .card__back {
+      transform: rotateY(180deg);
+      color: #fff;
+      background: linear-gradient(150deg, var(--accent-2), var(--accent) 55%, var(--heart-4));
+    }
+
+    .card__num {
+      position: absolute;
+      top: 18px;
+      left: 22px;
+      font-family: var(--font-serif);
+      font-style: italic;
+      font-size: 1rem;
+      color: var(--text-soft);
+    }
+
+    .card__icon {
+      display: grid;
+      place-items: center;
+      width: 78px;
+      height: 78px;
+      border-radius: 50%;
+      font-size: 2.3rem;
+      background: linear-gradient(145deg, #fff, rgba(255, 214, 228, 0.8));
+      box-shadow: 0 10px 24px -10px rgba(232, 99, 143, 0.6);
+    }
+
+    .card__title {
+      display: block;
+      margin: 6px 0 0;
+      font-family: var(--font-serif);
+      font-weight: 600;
+      font-size: 1.55rem;
+      color: var(--accent-dark);
+    }
+
+    .card__hint { font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-soft); }
+
+    .card__text {
+      display: block;
+      margin: 0;
+      font-family: var(--font-serif);
+      font-style: italic;
+      font-size: 1.22rem;
+      line-height: 1.55;
+      text-shadow: 0 1px 8px rgba(150, 40, 90, 0.25);
+    }
+
+    /* ===================== 4. Финал ===================== */
+    .final { text-align: center; }
+
+    .big-heart {
+      position: relative;
+      width: clamp(160px, 42vw, 250px);
+      aspect-ratio: 1;
+      margin-bottom: 24px;
+      display: grid;
+      place-items: center;
+    }
+
+    /* Расходящиеся волны вокруг сердца */
+    .big-heart::before, .big-heart::after {
+      content: '';
+      position: absolute;
+      inset: 8%;
+      border-radius: 50%;
+      border: 2px solid var(--accent-2);
+      opacity: 0;
+      animation: ripple 2.8s ease-out infinite;
+    }
+    .big-heart::after { animation-delay: 1.4s; }
+
+    @keyframes ripple {
+      0%   { transform: scale(0.6); opacity: 0.7; }
+      100% { transform: scale(1.6); opacity: 0; }
+    }
+
+    .big-heart svg {
+      position: relative;
+      width: 100%;
+      height: auto;
+      overflow: visible;
+      filter: drop-shadow(0 16px 30px rgba(232, 99, 143, 0.55));
+      animation: heartbeat 1.5s ease-in-out infinite;
+      cursor: pointer;
+    }
+    .final.is-answered .big-heart svg { animation-duration: 0.9s; }
+
+    @keyframes heartbeat {
+      0%, 100% { transform: scale(1); }
+      14%      { transform: scale(1.12); }
+      28%      { transform: scale(1); }
+      42%      { transform: scale(1.08); }
+      70%      { transform: scale(1); }
+    }
+
+    .final__question {
+      margin: 0 0 34px;
+      font-family: var(--font-script);
+      font-weight: 400;
+      font-size: clamp(2.5rem, 8vw, 4.4rem);
+      line-height: 1.15;
+      color: var(--accent-dark);
+      text-shadow: 0 4px 24px rgba(255, 255, 255, 0.9);
+    }
+
+    .final__ask { transition: opacity 0.8s ease, transform 0.8s var(--ease-soft); }
+    .final__ask.is-hidden { opacity: 0; transform: scale(0.94); pointer-events: none; }
+
+    .final__buttons {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .btn--yes {
+      padding: 18px 48px;
+      font-size: 1.25rem;
+      transform: scale(var(--yes-scale, 1));
+    }
+    .btn--yes:hover { transform: scale(calc(var(--yes-scale, 1) * 1.05)); }
+
+    .btn--no {
+      position: relative;
+      z-index: 5;
+      transition: transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .btn--no:hover { box-shadow: 0 10px 30px -14px rgba(180, 54, 106, 0.4); }
+
+    .final__answer {
+      width: 100%;
+      max-width: 620px;
+      padding: clamp(28px, 6vw, 52px);
+      opacity: 0;
+      transform: translateY(30px) scale(0.96);
+      transition: opacity 1.4s var(--ease-soft), transform 1.4s var(--ease-soft);
+    }
+    .final__answer[hidden] { display: none; }
+    .final__answer.is-visible { opacity: 1; transform: none; }
+
+    .final__answer-title {
+      margin: 0 0 14px;
+      font-family: var(--font-script);
+      font-weight: 400;
+      font-size: clamp(2.6rem, 8vw, 4rem);
+      line-height: 1.15;
+      color: var(--accent-dark);
+    }
+
+    .final__answer-text {
+      margin: 0 0 18px;
+      font-family: var(--font-serif);
+      font-size: clamp(1.15rem, 2.8vw, 1.35rem);
+      line-height: 1.7;
+    }
+
+    .final__answer-sign {
+      margin: 0 0 26px;
+      font-family: var(--font-script);
+      font-size: clamp(1.8rem, 5vw, 2.3rem);
+      color: var(--accent-dark);
+    }
+
+    .footer {
+      position: relative;
+      z-index: 3;
+      padding: 0 16px 36px;
+      text-align: center;
+      font-size: 0.85rem;
+      letter-spacing: 0.08em;
+      color: var(--text-soft);
+    }
+
+    /* ===================== Мобильная адаптация ===================== */
+    @media (max-width: 480px) {
+      .btn { padding: 15px 28px; font-size: 1rem; }
+      .btn--yes { padding: 16px 40px; font-size: 1.15rem; }
+      .card { height: 270px; }
+      .letter__p { text-indent: 1em; }
+    }
+
+    /* Для тех, у кого в системе отключены анимации */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        animation-delay: 0s !important;
+        transition-duration: 0.01ms !important;
+        transition-delay: 0s !important;
+      }
+    }
+  </style>
+</head>
+<body class="is-locked">
+
+  <!-- Фон -->
+  <div class="backdrop" aria-hidden="true"></div>
+  <div class="blobs" aria-hidden="true">
+    <div class="blob blob--1" data-depth="40" data-scroll="0.06"><span></span></div>
+    <div class="blob blob--2" data-depth="-50" data-scroll="0.12"><span></span></div>
+    <div class="blob blob--3" data-depth="30" data-scroll="0.09"><span></span></div>
+  </div>
+  <canvas id="bg-canvas" aria-hidden="true"></canvas>
+  <canvas id="fx-canvas" aria-hidden="true"></canvas>
+
+  <!-- ============ 1. ЭКРАН-ПРИВЕТСТВИЕ ============ -->
+  <section class="welcome" id="welcome">
+    <div class="welcome__inner" data-depth="-14">
+      <p class="welcome__pre" id="welcome-pre"></p>
+      <h1 class="welcome__name" id="welcome-name"></h1>
+      <svg class="flourish" viewBox="0 0 320 30" aria-hidden="true">
+        <path d="M10 15 C 60 2, 100 28, 145 15" />
+        <path d="M175 15 C 220 2, 260 28, 310 15" />
+        <path class="flourish__heart" d="M160 22 C152 16 148 13 148 9.5 C148 7 150 5 152.5 5 C154.5 5 156 6 160 9.5 C164 6 165.5 5 167.5 5 C170 5 172 7 172 9.5 C172 13 168 16 160 22 Z" />
+      </svg>
+      <p class="welcome__sub" id="welcome-sub"></p>
+      <button class="btn" id="open-btn" type="button">
+        <span class="beat" aria-hidden="true">❤</span>
+        <span id="open-btn-text"></span>
+      </button>
+    </div>
+  </section>
+
+  <main class="main" id="main" hidden>
+
+    <!-- ============ 2. ПРИЗНАНИЕ ============ -->
+    <section class="section letter" id="letter">
+      <h2 class="section-title reveal" id="letter-title"></h2>
+      <article class="glass letter__card reveal" style="--delay: 0.2s">
+        <p class="letter__greeting" id="letter-greeting"></p>
+        <div id="letter-body"></div>
+        <p class="letter__sign reveal" id="letter-sign"></p>
+      </article>
+      <div class="scroll-hint reveal" style="--delay: 0.6s" aria-hidden="true">
+        <span>листай вниз</span>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+    </section>
+
+    <!-- ============ 3. ПРИЧИНЫ ============ -->
+    <section class="section reasons" id="reasons">
+      <h2 class="section-title reveal" id="reasons-title"></h2>
+      <p class="section-sub reveal" id="reasons-sub" style="--delay: 0.15s"></p>
+      <div class="reasons__grid" id="reasons-grid"></div>
+    </section>
+
+    <!-- ============ 4. ФИНАЛ ============ -->
+    <section class="section final" id="final">
+      <div data-depth="12">
+      <div class="big-heart reveal" aria-hidden="true">
+        <svg viewBox="0 0 100 94" id="big-heart">
+          <defs>
+            <linearGradient id="heartGradient" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" style="stop-color: var(--accent-2)" />
+              <stop offset="55%" style="stop-color: var(--accent)" />
+              <stop offset="100%" style="stop-color: var(--accent-dark)" />
+            </linearGradient>
+            <radialGradient id="heartShine" cx="0.32" cy="0.28" r="0.35">
+              <stop offset="0%" stop-color="#fff" stop-opacity="0.7" />
+              <stop offset="100%" stop-color="#fff" stop-opacity="0" />
+            </radialGradient>
+          </defs>
+          <path d="M50 88 C20 65 4 48 4 30 C4 16 15 6 28 6 C38 6 46 12 50 20 C54 12 62 6 72 6 C85 6 96 16 96 30 C96 48 80 65 50 88 Z" fill="url(#heartGradient)" />
+          <path d="M50 88 C20 65 4 48 4 30 C4 16 15 6 28 6 C38 6 46 12 50 20 C54 12 62 6 72 6 C85 6 96 16 96 30 C96 48 80 65 50 88 Z" fill="url(#heartShine)" />
+        </svg>
+      </div>
+      </div>
+
+      <div class="final__ask reveal" id="final-ask" style="--delay: 0.2s">
+        <h2 class="final__question" id="final-question"></h2>
+        <div class="final__buttons">
+          <button class="btn btn--yes" id="yes-btn" type="button"></button>
+          <button class="btn btn--ghost btn--no" id="no-btn" type="button"></button>
+        </div>
+      </div>
+
+      <div class="glass final__answer" id="final-answer" hidden>
+        <h2 class="final__answer-title" id="answer-title"></h2>
+        <p class="final__answer-text" id="answer-text"></p>
+        <p class="final__answer-sign" id="answer-sign"></p>
+        <button class="btn" id="again-btn" type="button"></button>
+      </div>
+    </section>
+
+    <footer class="footer" id="footer"></footer>
+  </main>
+
+  <script>
+    'use strict';
+
+    /* =====================================================================
+       ✏️ ВСЕ ТЕКСТЫ И ИМЕНА — МЕНЯЙ ЗДЕСЬ
+       В любом тексте можно писать {her} и {me} — они автоматически
+       заменятся на имена ниже. Так имя достаточно поменять в одном месте.
+       ===================================================================== */
+    const CONFIG = {
+      herName: 'Танюша',   // ← её имя (крупно на первом экране и в текстах)
+      myName: 'Кирилл',   // ← твоё имя (подпись)
+
+      pageTitle: 'Для тебя, {her} ❤', // название вкладки браузера
+
+      welcome: {
+        pre: 'Для самой прекрасной девушки на свете',
+        sub: 'Я долго подбирал слова… и решил сказать их вот так.',
+        button: 'Открыть моё сердце',
+      },
+
+      letter: {
+        title: 'Моё признание',
+        greeting: 'Моя любимая {her},',
+        // Абзацы письма — можно добавлять и удалять
+        paragraphs: [
+          'Знаешь, я много раз пытался подобрать слова, чтобы рассказать, что ты для меня значишь. И каждый раз понимал: любых слов будет мало. Но я всё-таки попробую — потому что ты заслуживаешь услышать это.',
+          'С тех пор как ты появилась в моей жизни, всё стало другим. Обычные дни превратились в маленькие праздники, тишина стала уютной, а будущее — светлым и желанным. Рядом с тобой я становлюсь лучше: спокойнее, добрее, смелее. Ты — мой дом, в котором всегда тепло.',
+          'Я люблю тебя за всё: за твой смех и за твою задумчивость, за нежность и за характер, за то, как ты смотришь на мир и на меня. Я хочу быть рядом и в радости, и в трудные минуты, держать тебя за руку и каждый день доказывать, что ты — самое лучшее, что со мной случалось.',
+        ],
+        signature: 'Навсегда твой, {me}',
+      },
+
+      reasons: {
+        title: 'За что я тебя люблю',
+        subtitle: 'Наведи или нажми на карточку ♡',
+        // Карточки: иконка (эмодзи), заголовок и текст на обороте
+        items: [
+          { icon: '🌸', title: 'Твоя улыбка', text: 'Она делает солнечным даже самый серый день. Я готов бесконечно тебя смешить, лишь бы видеть её снова и снова.' },
+          { icon: '✨', title: 'Твои глаза', text: 'В них целая вселенная — тёплая, добрая и такая родная. Когда ты смотришь на меня, мир замирает.' },
+          { icon: '🤍', title: 'Твоя доброта', text: 'Ты умеешь заботиться так искренне и нежно, что рядом с тобой хочется становиться лучше.' },
+          { icon: '🎶', title: 'Твой смех', text: 'Самая красивая музыка на свете. Я узнаю его из тысячи и каждый раз улыбаюсь в ответ.' },
+          { icon: '🌙', title: 'Наши разговоры', text: 'С тобой можно говорить обо всём до самого утра — и молчать тоже. С тобой легко быть собой.' },
+          { icon: '🏡', title: 'Ты — мой дом', text: 'Где бы я ни был, рядом с тобой я дома. Ты — моё спокойствие, моя радость и моё счастье.' },
+        ],
+      },
+
+      final: {
+        question: 'Ты будешь со мной навсегда?',
+        yes: 'Да ❤',
+        showNoButton: true, // false — убрать шуточную кнопку «Нет»
+        // Кнопка «Нет» убегает и меняет надпись по кругу
+        noPhrases: ['Нет', 'Точно нет? 🥺', 'Подумай ещё!', 'Ну пожалуйста…', 'Не поймаешь 😄', 'Жми «Да» 😉'],
+        answerTitle: 'Я тебя люблю!',
+        answerText: 'Это самое счастливое «да» в моей жизни. Обещаю беречь тебя, радовать, поддерживать и любить каждый день — сегодня, завтра и всегда. Ты — моё навсегда, {her}.',
+        answerSign: 'Твой {me} ❤',
+        againButton: 'Ещё салют 🎆',
+      },
+
+      footer: 'Сделано с любовью для {her} ♡',
+
+      // Настройки эффектов
+      effects: {
+        bgDensity: 1,       // плотность сердечек на фоне (0.5 — меньше, 2 — больше)
+        clickHearts: 12,    // сколько сердечек разлетается при клике
+        celebrationMs: 7000 // длительность дождя из сердечек после «Да»
+      },
+    };
+
+    /* =====================================================================
+       Дальше — логика сайта. Менять не обязательно.
+       ===================================================================== */
+
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+    const $ = (id) => document.getElementById(id);
+    const fmt = (str) => String(str).replace(/\{her\}/g, () => CONFIG.herName).replace(/\{me\}/g, () => CONFIG.myName);
+    const rand = (min, max) => Math.random() * (max - min) + min;
+    const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+    // Цвета сердечек берём из CSS-переменных, чтобы всё менялось в одном месте
+    const rootStyle = getComputedStyle(document.documentElement);
+    const HEART_COLORS = [1, 2, 3, 4, 5]
+      .map((n) => rootStyle.getPropertyValue('--heart-' + n).trim())
+      .filter(Boolean);
+    if (!HEART_COLORS.length) HEART_COLORS.push('#f48fb1');
+
+    // Та же форма сердца, что и у большого SVG-сердца (размер 100×94)
+    const HEART_PATH = new Path2D('M50 88 C20 65 4 48 4 30 C4 16 15 6 28 6 C38 6 46 12 50 20 C54 12 62 6 72 6 C85 6 96 16 96 30 C96 48 80 65 50 88 Z');
+
+    function drawHeart(ctx, x, y, size, rotation, color, alpha) {
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.translate(x, y);
+      ctx.rotate(rotation);
+      const k = size / 100;
+      ctx.scale(k, k);
+      ctx.translate(-50, -47);
+      ctx.fillStyle = color;
+      ctx.fill(HEART_PATH);
+      ctx.restore();
+    }
+
+    /* ---------- Заполняем тексты из CONFIG ---------- */
+    function fillTexts() {
+      document.title = fmt(CONFIG.pageTitle);
+
+      $('welcome-pre').textContent = fmt(CONFIG.welcome.pre);
+      $('welcome-sub').textContent = fmt(CONFIG.welcome.sub);
+      $('open-btn-text').textContent = fmt(CONFIG.welcome.button);
+
+      // Имя разбиваем на буквы для анимации появления
+      const nameEl = $('welcome-name');
+      nameEl.setAttribute('aria-label', CONFIG.herName);
+      Array.from(CONFIG.herName).forEach((ch, i) => {
+        const span = document.createElement('span');
+        span.className = 'letter';
+        span.setAttribute('aria-hidden', 'true');
+        span.style.setProperty('--i', i);
+        span.textContent = ch === ' ' ? ' ' : ch;
+        nameEl.appendChild(span);
+      });
+
+      // Письмо: каждый абзац — набор слов, которые проявляются по очереди
+      $('letter-title').textContent = fmt(CONFIG.letter.title);
+      $('letter-greeting').textContent = fmt(CONFIG.letter.greeting);
+      $('letter-sign').textContent = fmt(CONFIG.letter.signature);
+      const body = $('letter-body');
+      CONFIG.letter.paragraphs.forEach((text) => {
+        const p = document.createElement('p');
+        p.className = 'letter__p reveal-words';
+        fmt(text).split(/\s+/).forEach((word, i) => {
+          const span = document.createElement('span');
+          span.className = 'word';
+          span.style.setProperty('--i', i);
+          span.textContent = word;
+          p.appendChild(span);
+          p.appendChild(document.createTextNode(' '));
+        });
+        body.appendChild(p);
+      });
+
+      // Карточки причин
+      $('reasons-title').textContent = fmt(CONFIG.reasons.title);
+      $('reasons-sub').textContent = fmt(CONFIG.reasons.subtitle);
+      const grid = $('reasons-grid');
+      CONFIG.reasons.items.forEach((item, i) => {
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = 'card reveal';
+        card.style.setProperty('--delay', (i % 3) * 0.15 + 's');
+        card.setAttribute('aria-pressed', 'false');
+        card.innerHTML = `
+          <span class="card__inner">
+            <span class="card__face card__front">
+              <span class="card__num">${String(i + 1).padStart(2, '0')}</span>
+              <span class="card__icon" aria-hidden="true"></span>
+              <span class="card__title"></span>
+              <span class="card__hint">${finePointer ? 'наведи' : 'нажми'} ♡</span>
+            </span>
+            <span class="card__face card__back">
+              <span class="card__text"></span>
+            </span>
+          </span>`;
+        card.querySelector('.card__icon').textContent = item.icon;
+        card.querySelector('.card__title').textContent = fmt(item.title);
+        card.querySelector('.card__text').textContent = fmt(item.text);
+        card.addEventListener('click', () => {
+          const flipped = card.classList.toggle('is-flipped');
+          card.setAttribute('aria-pressed', String(flipped));
+        });
+        grid.appendChild(card);
+      });
+
+      // Финал
+      $('final-question').textContent = fmt(CONFIG.final.question);
+      $('yes-btn').textContent = fmt(CONFIG.final.yes);
+      $('no-btn').textContent = fmt(CONFIG.final.noPhrases[0] || 'Нет');
+      if (!CONFIG.final.showNoButton) $('no-btn').remove();
+      $('answer-title').textContent = fmt(CONFIG.final.answerTitle);
+      $('answer-text').textContent = fmt(CONFIG.final.answerText);
+      $('answer-sign').textContent = fmt(CONFIG.final.answerSign);
+      $('again-btn').textContent = fmt(CONFIG.final.againButton);
+
+      $('footer').textContent = fmt(CONFIG.footer);
+    }
+
+    /* ---------- Появление блоков при прокрутке (IntersectionObserver) ---------- */
+    function initReveal() {
+      const targets = document.querySelectorAll('.reveal, .reveal-words');
+      if (!('IntersectionObserver' in window)) {
+        targets.forEach((el) => el.classList.add('is-visible'));
+        return;
+      }
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.15, rootMargin: '0px 0px -8% 0px' });
+      targets.forEach((el) => observer.observe(el));
+    }
+
+    /* ---------- Холст для фона: медленно плывущие сердечки и искорки ---------- */
+    const bg = {
+      canvas: $('bg-canvas'),
+      ctx: null,
+      w: 0,
+      h: 0,
+      hearts: [],
+      sparkles: [],
+    };
+    bg.ctx = bg.canvas.getContext('2d');
+
+    function makeBgHeart(anywhere) {
+      const size = rand(8, 24);
+      return {
+        baseX: rand(0, bg.w),
+        y: anywhere ? rand(0, bg.h) : bg.h + 40,
+        size,
+        depth: size / 24,           // крупные — «ближе», сильнее двигаются в параллаксе
+        speed: rand(10, 32),        // пикселей в секунду
+        sway: rand(10, 40),
+        swaySpeed: rand(0.3, 0.9),
+        phase: rand(0, Math.PI * 2),
+        rot: rand(-0.4, 0.4),
+        alpha: rand(0.25, 0.6),
+        color: pick(HEART_COLORS),
+      };
+    }
+
+    function makeSparkle() {
+      return {
+        x: rand(0, bg.w),
+        y: rand(0, bg.h),
+        r: rand(0.8, 2.2),
+        speed: rand(0.6, 1.6),
+        phase: rand(0, Math.PI * 2),
+        depth: rand(0.2, 0.8),
+      };
+    }
+
+    function resizeCanvas(canvas, ctx) {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      return { w, h };
+    }
+
+    function resizeBg() {
+      const size = resizeCanvas(bg.canvas, bg.ctx);
+      bg.w = size.w;
+      bg.h = size.h;
+      const factor = (reducedMotion ? 0.4 : 1) * CONFIG.effects.bgDensity;
+      const heartCount = Math.round(Math.min(Math.max((bg.w * bg.h) / 30000, 12), 40) * factor);
+      const sparkleCount = Math.round(heartCount * 0.8);
+      // Добавляем/убираем элементы, а не пересоздаём — чтобы не было рывков на телефоне
+      while (bg.hearts.length < heartCount) bg.hearts.push(makeBgHeart(true));
+      bg.hearts.length = heartCount;
+      while (bg.sparkles.length < sparkleCount) bg.sparkles.push(makeSparkle());
+      bg.sparkles.length = sparkleCount;
+    }
+
+    /* ---------- Параллакс за курсором и прокруткой ---------- */
+    const pointer = { x: 0, y: 0, tx: 0, ty: 0 };
+    const parallaxEls = Array.from(document.querySelectorAll('[data-depth]')).map((el) => ({
+      el,
+      depth: parseFloat(el.dataset.depth) || 0,
+      scroll: parseFloat(el.dataset.scroll) || 0,
+    }));
+
+    if (finePointer && !reducedMotion) {
+      window.addEventListener('pointermove', (e) => {
+        pointer.tx = (e.clientX / window.innerWidth - 0.5) * 2;
+        pointer.ty = (e.clientY / window.innerHeight - 0.5) * 2;
+      }, { passive: true });
+    }
+
+    function updateParallax() {
+      pointer.x += (pointer.tx - pointer.x) * 0.05;
+      pointer.y += (pointer.ty - pointer.y) * 0.05;
+      const sy = reducedMotion ? 0 : window.scrollY;
+      parallaxEls.forEach(({ el, depth, scroll }) => {
+        const x = pointer.x * depth;
+        const y = pointer.y * depth - sy * scroll;
+        el.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0)`;
+      });
+    }
+
+    /* ---------- Главный цикл фона ---------- */
+    let lastTime = performance.now();
+
+    function bgLoop(now) {
+      const dt = Math.min(Math.max((now - lastTime) / 1000, 0), 0.05);
+      lastTime = now;
+      const t = now / 1000;
+      const ctx = bg.ctx;
+      const scrollY = window.scrollY;
+      const span = bg.h + 80;
+
+      updateParallax();
+      ctx.clearRect(0, 0, bg.w, bg.h);
+
+      // Искорки
+      ctx.fillStyle = '#ffffff';
+      bg.sparkles.forEach((s) => {
+        const a = 0.15 + 0.55 * Math.abs(Math.sin(t * s.speed + s.phase));
+        const y = (((s.y - scrollY * s.depth * 0.1) % bg.h) + bg.h) % bg.h;
+        ctx.globalAlpha = a;
+        ctx.beginPath();
+        ctx.arc(s.x + pointer.x * s.depth * 12, y + pointer.y * s.depth * 12, s.r, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+
+      // Сердечки
+      bg.hearts.forEach((h, i) => {
+        if (!reducedMotion) h.y -= h.speed * dt;
+        if (h.y < -40) bg.hearts[i] = h = makeBgHeart(false);
+        const x = h.baseX + Math.sin(t * h.swaySpeed + h.phase) * h.sway + pointer.x * h.depth * 25;
+        const yRaw = h.y - scrollY * h.depth * 0.2 + pointer.y * h.depth * 25;
+        const y = ((((yRaw + 40) % span) + span) % span) - 40;
+        const rot = h.rot + Math.sin(t * h.swaySpeed + h.phase) * 0.2;
+        drawHeart(ctx, x, y, h.size, rot, h.color, h.alpha);
+      });
+
+      requestAnimationFrame(bgLoop);
+    }
+
+    /* ---------- Эффекты: разлёт сердечек, салют, дождь ---------- */
+    const fx = {
+      canvas: $('fx-canvas'),
+      ctx: null,
+      w: 0,
+      h: 0,
+      particles: [],
+      running: false,
+      rainUntil: 0,
+      rainAcc: 0,
+      last: 0,
+    };
+    fx.ctx = fx.canvas.getContext('2d');
+    const MAX_PARTICLES = 700;
+
+    function resizeFx() {
+      const size = resizeCanvas(fx.canvas, fx.ctx);
+      fx.w = size.w;
+      fx.h = size.h;
+    }
+
+    function addParticle(p) {
+      if (fx.particles.length >= MAX_PARTICLES) return;
+      fx.particles.push(Object.assign({
+        vx: 0, vy: 0, gravity: 260, drag: 0.985,
+        size: 12, rot: 0, vr: 0, age: 0, life: 1.5,
+        color: pick(HEART_COLORS), shape: 'heart', onDie: null,
+      }, p));
+      startFx();
+    }
+
+    // Разлёт сердечек из точки
+    function burst(x, y, count, power = 1) {
+      for (let i = 0; i < count; i++) {
+        const angle = rand(0, Math.PI * 2);
+        const speed = rand(110, 340) * power;
+        addParticle({
+          x, y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed - 80 * power,
+          size: rand(9, 18) * Math.min(1.3, 0.7 + power * 0.3),
+          rot: rand(-0.5, 0.5),
+          vr: rand(-3, 3),
+          life: rand(0.9, 1.6),
+          shape: Math.random() < 0.8 ? 'heart' : 'dot',
+        });
+      }
+    }
+
+    // Ракета салюта: взлетает и взрывается сердечками
+    function launchFirework() {
+      const x = rand(fx.w * 0.15, fx.w * 0.85);
+      const targetY = rand(fx.h * 0.15, fx.h * 0.45);
+      const vy = -Math.sqrt(2 * 520 * (fx.h - targetY)); // скорость, чтобы долететь до targetY
+      addParticle({
+        x, y: fx.h + 10, vx: rand(-30, 30), vy,
+        gravity: 520, drag: 1, size: 4, life: Math.abs(vy) / 520,
+        shape: 'rocket', color: '#ffffff',
+        onDie: (p) => burst(p.x, p.y, 34, 1.4),
+      });
+    }
+
+    function startRain(ms) {
+      fx.rainUntil = Math.max(fx.rainUntil, performance.now() + ms);
+      startFx();
+    }
+
+    function spawnRainHeart() {
+      addParticle({
+        x: rand(0, fx.w), y: -30,
+        vx: rand(-30, 30), vy: rand(70, 170),
+        gravity: 15, drag: 1, size: rand(12, 28),
+        rot: rand(-0.6, 0.6), vr: rand(-1.2, 1.2),
+        life: 12, shape: 'heart',
+      });
+    }
+
+    function startFx() {
+      if (fx.running) return;
+      fx.running = true;
+      fx.last = performance.now();
+      requestAnimationFrame(fxLoop);
+    }
+
+    function fxLoop(now) {
+      const dt = Math.min(Math.max((now - fx.last) / 1000, 0), 0.05);
+      fx.last = now;
+      const ctx = fx.ctx;
+      ctx.clearRect(0, 0, fx.w, fx.h);
+
+      // Дождь из сердечек
+      if (now < fx.rainUntil) {
+        fx.rainAcc += dt * (fx.w < 600 ? 14 : 26); // сердечек в секунду
+        while (fx.rainAcc >= 1) { spawnRainHeart(); fx.rainAcc -= 1; }
+      }
+
+      const current = fx.particles;
+      fx.particles = []; // выжившие и новые (из onDie) частицы попадут сюда
+      current.forEach((p) => {
+        p.age += dt;
+        const dragK = Math.pow(p.drag, dt * 60);
+        p.vx *= dragK;
+        p.vy = p.vy * dragK + p.gravity * dt;
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.rot += p.vr * dt;
+
+        if (p.age >= p.life || p.y > fx.h + 60) {
+          if (p.onDie) p.onDie(p);
+          return;
+        }
+        fx.particles.push(p);
+
+        const left = 1 - p.age / p.life;
+        const alpha = p.shape === 'heart' && p.life > 5 ? 0.85 : Math.min(1, left * 2.5);
+
+        if (p.shape === 'heart') {
+          drawHeart(ctx, p.x, p.y, p.size, p.rot, p.color, alpha);
+        } else if (p.shape === 'rocket') {
+          ctx.globalAlpha = 0.9;
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = 0.35;
+          ctx.fillStyle = HEART_COLORS[0];
+          ctx.beginPath();
+          ctx.arc(p.x - p.vx * 0.02, p.y - p.vy * 0.02, 2.5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = 1;
+        } else {
+          ctx.globalAlpha = alpha;
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size * 0.18, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = 1;
+        }
+      });
+
+      if (fx.particles.length || now < fx.rainUntil) {
+        requestAnimationFrame(fxLoop);
+      } else {
+        fx.running = false;
+        ctx.clearRect(0, 0, fx.w, fx.h);
+      }
+    }
+
+    function celebrate() {
+      const heart = $('big-heart').getBoundingClientRect();
+      burst(heart.left + heart.width / 2, heart.top + heart.height / 2, 50, 1.6);
+      const rockets = reducedMotion ? 3 : 10;
+      for (let i = 0; i < rockets; i++) setTimeout(launchFirework, 250 + i * 380);
+      startRain(CONFIG.effects.celebrationMs);
+    }
+
+    /* ---------- Сердечки по клику в любом месте ---------- */
+    document.addEventListener('pointerdown', (e) => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      burst(e.clientX, e.clientY, CONFIG.effects.clickHearts, 0.7);
+    });
+
+    /* ---------- Экран-приветствие → основная часть ---------- */
+    function initWelcome() {
+      const welcome = $('welcome');
+      const main = $('main');
+      $('open-btn').addEventListener('click', (e) => {
+        const r = e.currentTarget.getBoundingClientRect();
+        burst(r.left + r.width / 2, r.top + r.height / 2, 36, 1.4);
+
+        welcome.classList.add('is-leaving');
+        main.hidden = false;
+        main.classList.add('is-entering');
+        document.body.classList.remove('is-locked');
+        window.scrollTo(0, 0);
+
+        setTimeout(() => { welcome.hidden = true; }, 1400);
+      }, { once: true });
+    }
+
+    /* ---------- Финал: «Да» / убегающее «Нет» ---------- */
+    function initFinal() {
+      const yesBtn = $('yes-btn');
+      const noBtn = $('no-btn');
+      const ask = $('final-ask');
+      const answer = $('final-answer');
+      let yesScale = 1;
+
+      if (noBtn) {
+        const phrases = CONFIG.final.noPhrases.length ? CONFIG.final.noPhrases : ['Нет'];
+        let phraseIndex = 0;
+        const offset = { x: 0, y: 0 };
+
+        const dodge = (e) => {
+          if (e) e.preventDefault();
+          phraseIndex = (phraseIndex + 1) % phrases.length;
+          noBtn.textContent = fmt(phrases[phraseIndex]);
+
+          const r = noBtn.getBoundingClientRect();
+          const baseLeft = r.left - offset.x;
+          const baseTop = r.top - offset.y;
+          const pad = 16;
+          const maxX = Math.max(pad, window.innerWidth - r.width - pad);
+          const minY = Math.max(pad, r.top - 170);
+          const maxY = Math.max(minY, Math.min(window.innerHeight - r.height - pad, r.top + 170));
+          let tx, ty, tries = 0;
+          do {
+            tx = rand(pad, maxX);
+            ty = rand(minY, maxY);
+            tries++;
+          } while (Math.hypot(tx - r.left, ty - r.top) < 110 && tries < 15);
+
+          offset.x = tx - baseLeft;
+          offset.y = ty - baseTop;
+          noBtn.style.transform = `translate(${offset.x.toFixed(1)}px, ${offset.y.toFixed(1)}px)`;
+
+          // С каждой попыткой «Да» становится чуть больше
+          yesScale = Math.min(yesScale + 0.07, 1.45);
+          yesBtn.style.setProperty('--yes-scale', yesScale.toFixed(2));
+        };
+
+        noBtn.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') dodge(); });
+        noBtn.addEventListener('pointerdown', (e) => { e.stopPropagation(); dodge(e); });
+        noBtn.addEventListener('click', (e) => { e.preventDefault(); if (e.detail === 0) dodge(); });
+      }
+
+      yesBtn.addEventListener('click', () => {
+        $('final').classList.add('is-answered');
+        ask.classList.add('is-hidden');
+        celebrate();
+
+        setTimeout(() => {
+          ask.hidden = true;
+          answer.hidden = false;
+          // Двойной кадр, чтобы transition сработал после снятия hidden
+          requestAnimationFrame(() => requestAnimationFrame(() => {
+            answer.classList.add('is-visible');
+            answer.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'center' });
+          }));
+        }, 900);
+      }, { once: true });
+
+      $('again-btn').addEventListener('click', celebrate);
+      $('big-heart').addEventListener('click', (e) => burst(e.clientX, e.clientY, 24, 1.3));
+    }
+
+    /* ---------- Запуск ---------- */
+    fillTexts();
+    resizeBg();
+    resizeFx();
+    initReveal();
+    initWelcome();
+    initFinal();
+
+    let resizeTimer = 0;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => { resizeBg(); resizeFx(); }, 150);
+    });
+
+    requestAnimationFrame(bgLoop);
+  </script>
+</body>
+</html>
